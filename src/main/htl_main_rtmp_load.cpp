@@ -136,16 +136,26 @@ int main(int argc, char** argv){
 
     for(int i = 0; i < threads; i++){
         StRtmpTask* task = new StRtmpTask();
+        char index[16];
+        snprintf(index, sizeof(index), "%d", i);
 
-        if((ret = task->Initialize(url, start, delay, error, count)) != ERROR_SUCCESS){
-            Error("initialize task failed, url=%s, ret=%d", url.c_str(), ret);
+        std::string _index = index;
+        std::string rtmp_url = url;
+        size_t pos = std::string::npos;
+        if ((pos = rtmp_url.find("{i}")) != std::string::npos) {
+            rtmp_url = rtmp_url.replace(pos, 3, _index);
+        }
+
+        if((ret = task->Initialize(rtmp_url, start, delay, error, count)) != ERROR_SUCCESS){
+            Error("initialize task failed, url=%s, ret=%d", rtmp_url.c_str(), ret);
             return ret;
         }
-        
+
         if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
             Error("st farm spwan task failed, ret=%d", ret);
             return ret;
         }
+
     }
     
     farm.WaitAll();
