@@ -162,8 +162,8 @@ Uri* StRtmpPublishTask::GetUri(){
 int StRtmpPublishTask::ProcessTask(){
     int ret = ERROR_SUCCESS;
     
-    Trace("start to process RTMP publish task #%d, schema=%s, host=%s, port=%d, tcUrl=%s, stream=%s, startup=%.2f, delay=%.2f, error=%.2f, count=%d", 
-        GetId(), url.GetSchema(), url.GetHost(), url.GetPort(), url.GetTcUrl(), url.GetStream(), startup_seconds, delay_seconds, error_seconds, count);
+    Trace("start to process RTMP publish task #%d, schema=%s, host=%s, port=%d, tcUrl=%s, url=%s,stream=%s, startup=%.2f, delay=%.2f, error=%.2f, count=%d", 
+        GetId(), url.GetSchema(), url.GetHost(), url.GetPort(), url.GetTcUrl(), url.GetUrl(), url.GetStream(), startup_seconds, delay_seconds, error_seconds, count);
        
     StRtmpPublishClient client;
     

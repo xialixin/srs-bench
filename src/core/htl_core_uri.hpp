@@ -102,6 +102,7 @@ public:
     virtual const char* GetVhost();
     virtual const char* GetApp();
     virtual const char* GetStream();
+    virtual const char* GetUrl();
 };
 
 #endif

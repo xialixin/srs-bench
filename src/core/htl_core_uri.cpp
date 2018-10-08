@@ -203,13 +203,13 @@ int RtmpUrl::Initialize(std::string http_url){
     stream = app.substr(pos + 1);
     app = app.substr(0, pos);
     if (!query.empty()) {
-        stream += "?" + query;
+        //stream += "?" + query;
+        app +="?" + query;
     }
-    
     stringstream ss;
     ss << schema << "://" << vhost << ":" << port << "/" << app;
     tcUrl = ss.str();
-    
+    Trace("%s", tcUrl.c_str());
     return ret;
 }
 
@@ -227,5 +227,11 @@ const char* RtmpUrl::GetApp(){
 
 const char* RtmpUrl::GetStream(){
     return stream.c_str();
+}
+
+const char* RtmpUrl::GetUrl(){
+    stringstream ss;
+    ss << schema << "://" << vhost << ":" << port << "/" << app <<"/" <<stream;
+    return ss.str().c_str();
 }
 

@@ -150,12 +150,11 @@ int main(int argc, char** argv){
             Error("initialize task failed, url=%s, ret=%d", rtmp_url.c_str(), ret);
             return ret;
         }
-
+        
         if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
             Error("st farm spwan task failed, ret=%d", ret);
             return ret;
         }
-
     }
     
     farm.WaitAll();
