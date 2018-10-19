@@ -47185,7 +47185,6 @@ int srs_rtmp_publish_stream(srs_rtmp_t rtmp)
     
     srs_assert(rtmp != NULL);
     Context* context = (Context*)rtmp;
-    printf("-------------------publish stream:%s", context->stream.c_str());
     if ((ret = context->rtmp->fmle_publish(context->stream, context->stream_id)) != ERROR_SUCCESS) {
         return ret;
     }
