@@ -222,7 +222,11 @@ int StRtmpPublishClient::PublishAV(srs_flv_t flv,
         if (re <= 0) {
             re = timestamp;
         }
-        
+
+        if (timestamp < re){
+           return ret;
+        }
+
         if (timestamp - re > 300) {
             st_usleep((timestamp - re) * 1000);
             re = timestamp;
