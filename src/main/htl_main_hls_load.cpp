@@ -42,22 +42,26 @@ using namespace std;
 
 int discovery_options(int argc, char** argv, 
     bool& show_help, bool& show_version, string& url, bool& vod, int& threads, 
-    double& startup, double& delay, double& error, double& report, int& count)
+    double& startup, double& delay, double& error, double& report, int& count, bool&clientid)
 {
     int ret = ERROR_SUCCESS;
     
     static option long_options[] = {
         SharedOptions()
         {"vod", no_argument, 0, 'o'},
+        {"clientid", no_argument, 0, 'w'},
         {0, 0, 0, 0}
     };
     
     int opt = 0;
     int option_index = 0;
-    while((opt = getopt_long(argc, argv, "hvc:r:t:os:d:e:m:", long_options, &option_index)) != -1){
+    while((opt = getopt_long(argc, argv, "whvc:r:t:os:d:e:m:", long_options, &option_index)) != -1){
         switch(opt){
             case 'o':
                 vod = true;
+                break;
+            case 'w':
+                clientid = true;
                 break;
             ProcessSharedOptions()
             default:
@@ -74,6 +78,32 @@ int discovery_options(int argc, char** argv,
 
     return ret;
 }
+
+
+char *randstr(char *str, const int len)
+{
+	srand(time(NULL));
+	int i;
+	for (i = 0; i < len; ++i)
+	{
+		switch ((rand() % 3))
+		{
+		case 1:
+			str[i] = 'A' + rand() % 26;
+			break;
+		case 2:
+			str[i] = 'a' + rand() % 26;
+			break;
+		default:
+			str[i] = '0' + rand() % 10;
+			break;
+		}
+	}
+	str[++i] = '\0';
+	return str;
+}
+
+
 
 void help(char** argv){
     printf("%s, Copyright (c) 2013-2015 winlin\n", ProductHTTPName);
@@ -120,8 +150,9 @@ int main(int argc, char** argv){
     string url; bool vod = DefaultVod; int threads = DefaultThread; 
     double start = DefaultStartupSeconds, delay = DefaultDelaySeconds, error = DefaultErrorSeconds; 
     double report = DefaultReportSeconds; int count = DefaultCount;
+    bool clientid = false;
     
-    if((ret = discovery_options(argc, argv, show_help, show_version, url, vod, threads, start, delay, error, report, count)) != ERROR_SUCCESS){
+    if((ret = discovery_options(argc, argv, show_help, show_version, url, vod, threads, start, delay, error, report, count, clientid)) != ERROR_SUCCESS){
         Error("discovery options failed. ret=%d", ret);
         return ret;
     }
@@ -142,20 +173,35 @@ int main(int argc, char** argv){
         return ret;
     }
 
-    for(int i = 0; i < threads; i++){
-        StHlsTask* task = new StHlsTask();
+    vector<string> vecUrls;
+    SplitString(url, vecUrls,","); //可按多个字符来分隔;
+    for(vector<string>::size_type j = 0; j != vecUrls.size(); ++j){
+        for(int i = 0; i < threads; i++){
+            StHlsTask* task = new StHlsTask();
+            string httpurl = vecUrls[j];
+            if (clientid){
+                char cliid[9] = {0};
+                randstr(cliid, 8);
 
-        if((ret = task->Initialize(url, vod, start, delay, error, count)) != ERROR_SUCCESS){
-            Error("initialize task failed, url=%s, ret=%d", url.c_str(), ret);
-            return ret;
-        }
-        
-        if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
-            Error("st farm spwan task failed, ret=%d", ret);
-            return ret;
-        }
-    }
-    
+                char idx[10] = {0};
+                sprintf(idx,"%u",j+i);
+
+                httpurl = httpurl + "&clientId=" + cliid+idx;
+                Trace("httpurl:%s", httpurl.c_str());
+            }
+            
+            if((ret = task->Initialize(httpurl, vod, start, delay, error, count)) != ERROR_SUCCESS){
+                Error("initialize task failed, url=%s, ret=%d", httpurl.c_str(), ret);
+                return ret;
+            }
+            
+            if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
+                Error("st farm spwan task failed, ret=%d", ret);
+                return ret;
+            }
+        }//end for(int i = 0 
+    }//end for(vector<string>::size_type
+
     farm.WaitAll();
     
     return 0;

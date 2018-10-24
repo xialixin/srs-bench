@@ -46871,7 +46871,7 @@ srs_rtmp_t srs_rtmp_create(const char* url)
 {
     Context* context = new Context();
     context->url = url;
-
+  
     // create socket
     srs_freep(context->skt);
     context->skt = new SimpleSocketStream();

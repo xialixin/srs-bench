@@ -131,20 +131,24 @@ int main(int argc, char** argv){
         return ret;
     }
 
-    for(int i = 0; i < threads; i++){
-        StHttpTask* task = new StHttpTask();
+    vector<string> vecUrls;
+    SplitString(url, vecUrls,","); //可按多个字符来分隔;
+    for(vector<string>::size_type j = 0; j != vecUrls.size(); ++j){
+        for(int i = 0; i < threads; i++){
+            StHttpTask* task = new StHttpTask();
+            string httpurl = vecUrls[j];
+            if((ret = task->Initialize(httpurl, start, delay, error, count)) != ERROR_SUCCESS){
+                Error("initialize task failed, url=%s, ret=%d", httpurl.c_str(), ret);
+                return ret;
+            }
+            
+            if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
+                Error("st farm spwan task failed, ret=%d", ret);
+                return ret;
+            }
+        }//end for(int i = 0
+    }//end for(vector<string>::size_type
 
-        if((ret = task->Initialize(url, start, delay, error, count)) != ERROR_SUCCESS){
-            Error("initialize task failed, url=%s, ret=%d", url.c_str(), ret);
-            return ret;
-        }
-        
-        if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
-            Error("st farm spwan task failed, ret=%d", ret);
-            return ret;
-        }
-    }
-    
     farm.WaitAll();
     
     return 0;

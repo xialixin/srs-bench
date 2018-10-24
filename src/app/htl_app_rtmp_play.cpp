@@ -87,9 +87,15 @@ int StRtmpPlayClient::Dump(RtmpUrl* url){
 
 int StRtmpPlayClient::Connect(RtmpUrl* url){
     int ret = ERROR_SUCCESS;
-    
+    char tmpurl[256];
+
     srs_rtmp_destroy(srs);
-    srs = srs_rtmp_create(url->GetUrl());
+   
+    sprintf(tmpurl, "%s",url->GetUrl());
+    strcpy(tmpurl, url->GetUrl());
+   
+    srs = srs_rtmp_create(tmpurl);
+    Trace("socket connected on url %s",tmpurl);
 
     if ((ret = srs_rtmp_dns_resolve(srs)) != ERROR_SUCCESS){
         Error("dns resolve failed. ret=%d", ret);
@@ -100,8 +106,6 @@ int StRtmpPlayClient::Connect(RtmpUrl* url){
         Error("connect to server failed. ret=%d", ret);
         return ret;
     }
-    
-    Info("socket connected on url %s", url->GetUrl());
     
     return ret;
 }
