@@ -146,54 +146,34 @@ int main(int argc, char** argv){
         return ret;
     }
 
-
     vector<string> vecUrls;
     SplitString(url, vecUrls,","); //可按多个字符来分隔;
     //count = vecUrls.size() + 1
-    for(vector<string>::size_type i = 0; i != vecUrls.size(); ++i){
-        StRtmpPublishTask* task = new StRtmpPublishTask();
+    for(vector<string>::size_type j = 0; j != vecUrls.size(); ++j){
+        for(int i = 0; i < threads; i++){
+            StRtmpPublishTask* task = new StRtmpPublishTask();
 
-        char index[16];
-        snprintf(index, sizeof(index), "%d", i);
-        
-        std::string rtmp_url = vecUrls[i];
-        
-        if((ret = task->Initialize(input, rtmp_url, start, delay, error, count)) != ERROR_SUCCESS){
-            Error("initialize task failed, input=%s, url=%s, ret=%d", input.c_str(), rtmp_url.c_str(), ret);
-            return ret;
-        }
-        
-        if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
-            Error("st farm spwan task failed, ret=%d", ret);
-            return ret;
+            char index[16];
+            snprintf(index, sizeof(index), "%d", i);
+            
+            std::string _index = index;
+            std::string rtmp_url =  vecUrls[j];
+            size_t pos = std::string::npos;
+            if ((pos = rtmp_url.find("{i}")) != std::string::npos) {
+                rtmp_url = rtmp_url.replace(pos, 3, _index);
+            }
+            
+            if((ret = task->Initialize(input, rtmp_url, start, delay, error, count)) != ERROR_SUCCESS){
+                Error("initialize task failed, input=%s, url=%s, ret=%d", input.c_str(), rtmp_url.c_str(), ret);
+                return ret;
+            }
+            
+            if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
+                Error("st farm spwan task failed, ret=%d", ret);
+                return ret;
+            }
         }
     }
-   
-    /*  
-    for(int i = 0; i < threads; i++){
-        StRtmpPublishTask* task = new StRtmpPublishTask();
-
-        char index[16];
-        snprintf(index, sizeof(index), "%d", i);
-        
-        std::string _index = index;
-        std::string rtmp_url = url;
-        size_t pos = std::string::npos;
-        if ((pos = rtmp_url.find("{i}")) != std::string::npos) {
-            rtmp_url = rtmp_url.replace(pos, 3, _index);
-        }
-        
-        if((ret = task->Initialize(input, rtmp_url, start, delay, error, count)) != ERROR_SUCCESS){
-            Error("initialize task failed, input=%s, url=%s, ret=%d", input.c_str(), rtmp_url.c_str(), ret);
-            return ret;
-        }
-        
-        if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
-            Error("st farm spwan task failed, ret=%d", ret);
-            return ret;
-        }
-    }
-    */
     
     farm.WaitAll();
     
