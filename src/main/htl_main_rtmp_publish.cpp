@@ -34,6 +34,7 @@ using namespace std;
 #include <htl_core_error.hpp>
 #include <htl_app_rtmp_load.hpp>
 #include <htl_app_rtmp_protocol.hpp>
+#include <htl_app_rtmp_publish.hpp>
 
 #include <htl_main_utility.hpp>
 
@@ -138,6 +139,17 @@ int main(int argc, char** argv){
     
     Trace("params url=%s, threads=%d, start=%.2f, delay=%.2f, error=%.2f, report=%.2f, count=%d", 
         url.c_str(), threads, start, delay, error, report, count);
+
+    //SrsPsStreamClient ps("a", false, false);
+    //ps.init_sock("127.0.0.1", 9000);
+    static char *psdata=NULL;
+    long size = 0;
+    SrsPsStreamClient::read_ps_file("test.mpg", &psdata, &size);
+    Trace("file=%d, size=%u", psdata, size);
+    if(!psdata || !size){
+        Error("psdata is empty");
+        return ret;
+    }
     
     StFarm farm;
     
@@ -151,10 +163,16 @@ int main(int argc, char** argv){
     //count = vecUrls.size() + 1
     for(vector<string>::size_type j = 0; j != vecUrls.size(); ++j){
         for(int i = 0; i < threads; i++){
-            StRtmpPublishTask* task = new StRtmpPublishTask();
+            StPsPublishTask* task = new StPsPublishTask();
+            task->copy_psdata(psdata, size);
+            task->ssrc = i + 1;
+
+            Trace("===%x, %x, %x, %x", task->psdata[0], task->psdata[1], 
+                task->psdata[2], task->psdata[3]);
 
             char index[16];
             snprintf(index, sizeof(index), "%d", i);
+            
             
             std::string _index = index;
             std::string rtmp_url =  vecUrls[j];
@@ -165,15 +183,19 @@ int main(int argc, char** argv){
             
             if((ret = task->Initialize(input, rtmp_url, start, delay, error, count)) != ERROR_SUCCESS){
                 Error("initialize task failed, input=%s, url=%s, ret=%d", input.c_str(), rtmp_url.c_str(), ret);
+                srs_freep(psdata);
                 return ret;
             }
             
             if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
                 Error("st farm spwan task failed, ret=%d", ret);
+                srs_freep(psdata);
                 return ret;
             }
         }
     }
+
+    srs_freep(psdata);
     
     farm.WaitAll();
     

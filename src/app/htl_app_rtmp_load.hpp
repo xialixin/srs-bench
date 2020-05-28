@@ -28,6 +28,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <htl_app_rtmp_load.hpp>
 */
 #include <htl_app_task_base.hpp>
+#include <htl_app_rtmp_publish.hpp>
 
 // for rtmp task.
 class StRtmpTask : public StBaseTask
@@ -76,5 +77,30 @@ protected:
     virtual Uri* GetUri();
     virtual int ProcessTask();
 };
+
+// for rtmp publish load task.
+class StPsPublishTask : public StBaseTask
+{
+private:
+    std::string input_flv_file;
+    RtmpUrl url;
+    SrsPsStreamClient *client;
+public:
+    StPsPublishTask();
+    virtual ~StPsPublishTask();
+public:
+    char *psdata;
+    int size;
+    uint32_t ssrc;
+
+    void copy_psdata(char *p, int size);
+
+    virtual int Initialize(std::string input, 
+        std::string http_url, double startup, double delay, double error, int count);
+protected:
+    virtual Uri* GetUri();
+    virtual int ProcessTask();
+};
+
 
 #endif

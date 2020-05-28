@@ -103,6 +103,7 @@ public:
     virtual const char* GetApp();
     virtual const char* GetStream();
     virtual const char* GetUrl();
+    virtual string GetUrl2();
 };
 
 #endif

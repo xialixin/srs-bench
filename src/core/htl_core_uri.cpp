@@ -235,3 +235,10 @@ const char* RtmpUrl::GetUrl(){
     return ss.str().c_str();
 }
 
+string RtmpUrl::GetUrl2(){
+    stringstream ss;
+    ss << schema << "://" << vhost << ":" << port << "/" << app <<"/" <<stream;
+    return ss.str();
+}
+
+

@@ -157,4 +157,36 @@ public:
     virtual int GetId();
 };
 
+
+// class SrsUdpMuxSocket
+// {
+// private:
+//     ISrsUdpSender* handler;
+//     char* buf;
+//     int nb_buf;
+//     int nread;
+//     srs_netfd_t lfd;
+//     sockaddr_storage from;
+//     int fromlen;
+//     std::string peer_ip;
+//     int peer_port;
+// public:
+//     SrsUdpMuxSocket(ISrsUdpSender* h, srs_netfd_t fd);
+//     virtual ~SrsUdpMuxSocket();
+// public:
+//     int recvfrom(srs_utime_t timeout);
+//     int sendto(void* data, int size, srs_utime_t timeout);
+//     srs_netfd_t stfd();
+//     sockaddr_in* peer_addr();
+//     socklen_t peer_addrlen();
+//     char* data();
+//     int size();
+//     std::string get_peer_ip() const;
+//     int get_peer_port() const;
+//     std::string peer_id();
+//     SrsUdpMuxSocket* copy_sendonly();
+//     ISrsUdpSender* sender();
+// };
+
+
 #endif

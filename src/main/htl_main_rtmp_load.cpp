@@ -126,7 +126,8 @@ int main(int argc, char** argv){
     if(show_version){
         version();
     }
-    
+
+
     StFarm farm;
     
     if((ret = farm.Initialize(report)) != ERROR_SUCCESS){
@@ -148,7 +149,7 @@ int main(int argc, char** argv){
             if ((pos = rtmp_url.find("{i}")) != std::string::npos) {
                 rtmp_url = rtmp_url.replace(pos, 3, _index);
             }
-
+          
             if((ret = task->Initialize(rtmp_url, start, delay, error, count)) != ERROR_SUCCESS){
                 Error("initialize task failed, url=%s, ret=%d", rtmp_url.c_str(), ret);
                 return ret;

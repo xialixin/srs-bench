@@ -91,9 +91,9 @@ int StRtmpPlayClient::Connect(RtmpUrl* url){
 
     srs_rtmp_destroy(srs);
    
-    sprintf(tmpurl, "%s",url->GetUrl());
-    strcpy(tmpurl, url->GetUrl());
-   
+    sprintf(tmpurl, "%s",url->GetUrl2().c_str());
+    //strcpy(tmpurl, url->GetUrl());
+    Trace("====:%s", tmpurl);
     srs = srs_rtmp_create(tmpurl);
     Trace("socket connected on url %s",tmpurl);
 

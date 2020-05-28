@@ -189,3 +189,79 @@ int StRtmpPublishTask::ProcessTask(){
     return ret;
 }
 
+StPsPublishTask::StPsPublishTask(){
+    ssrc = 0;
+    psdata = new char[1024*1024*50];
+    size = 0;
+
+    client = new SrsPsStreamClient("", false, false);
+}
+
+StPsPublishTask::~StPsPublishTask(){
+    srs_freepa(psdata);
+    srs_freep(client);
+}
+
+int StPsPublishTask::Initialize(string input, string http_url, double startup, double delay, double error, int count){
+    int ret = ERROR_SUCCESS;
+    
+    input_flv_file = input;
+    
+    if((ret = InitializeBase(http_url, startup, delay, error, count)) != ERROR_SUCCESS){
+        return ret;
+    }
+
+    //SrsPsStreamClient  client("", false, false);
+    client->init_sock("127.0.0.1", 9000);
+    
+    return ret;
+}
+
+Uri* StPsPublishTask::GetUri(){
+    return &url;
+}
+
+void StPsPublishTask::copy_psdata(char *p, int s){
+    memcpy(psdata, p, s);
+    size = s;
+}
+
+int StPsPublishTask::ProcessTask(){
+    int ret = ERROR_SUCCESS;
+    
+    Trace("start to process RTMP publish task #%d, schema=%s, host=%s, port=%d, tcUrl=%s, url=%s,stream=%s, startup=%.2f, delay=%.2f, error=%.2f, count=%d", 
+        GetId(), url.GetSchema(), url.GetHost(), url.GetPort(), url.GetTcUrl(), url.GetUrl(), url.GetStream(), startup_seconds, delay_seconds, error_seconds, count);
+       
+   
+
+    if (!psdata || !size){
+        Error("ps data is NULL!");
+        return ret;
+    }
+
+    Trace("2===%x, %x, %x, %x", psdata[0], psdata[1], psdata[2], psdata[3]);
+  
+    
+    // if count is zero, infinity loop.
+    for(int i = 0; count == 0 || i < count; i++){
+        statistic->OnTaskStart(GetId(), url.GetUrl());
+        client->publish_ps(psdata, size, 0, GetId());
+        
+        // if((ret = client.Publish(input_flv_file, &url)) != ERROR_SUCCESS){
+        //     statistic->OnTaskError(GetId(), 0);
+            
+        //     Error("rtmp client publish url failed. ret=%d", ret);
+        //     st_usleep((st_utime_t)(error_seconds * 1000 * 1000));
+        //     continue;
+        // }
+        
+        int sleep_ms = StUtility::BuildRandomMTime((delay_seconds >= 0)? delay_seconds:0);
+        Trace("[RTMP] %s publish success, sleep %dms", url.GetUrl(), sleep_ms);
+        st_usleep(sleep_ms * 1000);
+        
+        statistic->OnTaskEnd(GetId(), 0);
+    }
+    
+    return ret;
+}
+
