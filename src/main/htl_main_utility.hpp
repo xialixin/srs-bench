@@ -81,7 +81,8 @@ LogContext* context = new StLogContext();
                 break; \
             case 'm': \
                 report = atof(optarg); \
-                break;
+                break;\
+            
 
 #define ShowHelpPart1()\
         "  -c CLIENTS, --clients CLIENTS    The concurrency client to start to request. defaut: %d\n" \

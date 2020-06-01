@@ -917,7 +917,7 @@ SrsPsStreamClient::SrsPsStreamClient(std::string id, bool a, bool k)
     blackhole_addr = NULL;
     seq = 0;
     pack_index  = 0;
-   
+    nfd = 0;
 }
 
 SrsPsStreamClient::~SrsPsStreamClient()
@@ -976,7 +976,7 @@ void SrsPsStreamClient::read_ps_file(std::string filename, char**msg, long *size
     *msg = text;
 }
 
-int  SrsPsStreamClient::init_sock(std::string host, int port)
+int  SrsPsStreamClient::init_sock(std::string host, int port, int start_port)
 {
     //st_init();
 
@@ -989,10 +989,27 @@ int  SrsPsStreamClient::init_sock(std::string host, int port)
     if ((sock = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
         return -1;
     }
+
+    int n = 1;
+    int r0 = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&n, sizeof(n));
+    assert(!r0);
+
+    sockaddr_in addr;
+    memset(&addr, 0, sizeof(sockaddr_in));
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(start_port+sock);
+    addr.sin_addr.s_addr = INADDR_ANY;
+
+    r0 = bind(sock, (sockaddr *)&addr, sizeof(sockaddr_in));
+
     if ((nfd = st_netfd_open_socket(sock)) == NULL) {
         close(sock);
         return -1;
     }
+
+    Trace("=======sock=%d port=%d, nfd=%d", sock, start_port+sock, nfd);
+
     
     return 0;
 }
@@ -1009,7 +1026,7 @@ int  SrsPsStreamClient::sendto(char *data, int size, int64_t timeout)
 //#define W_VIDEO_FILE
 //#define W_AUDIO_FILE
 //#define W_UNKONW_FILE
-//#define W_PS_FILE
+#define W_PS_FILE
 
 #define TIMEOUT (2*1000000LL)
 
@@ -1063,6 +1080,9 @@ int SrsPsStreamClient::on_ps_stream(char* ps_data, int ps_size, uint32_t timesta
                     rtp.payload = new SrsRtpRawPayload();
                     rtp.payload->payload = ps_packet_stream.bytes() + i * 1400;
                     rtp.payload->nn_payload = 1400;
+
+                    if ((i+1)*1400 == len)
+                        rtp.rtp_header.set_marker(true);
 
                     //Trace("ssrc=%u, ts=%u, seq=%d, playload=%d", rtp.rtp_header.get_ssrc(), rtp.rtp_header.get_timestamp(),
                     //     rtp.rtp_header.get_sequence(), rtp.payload->nn_payload);
@@ -1304,9 +1324,9 @@ int SrsPsStreamClient::on_ps_stream(char* ps_data, int ps_size, uint32_t timesta
             }
 
             first_keyframe_flag = false;
-            // Trace("gb28181: client_id %s, unkonw ps data (%#x/%u) %02x %02x %02x %02x\n", 
-            //     channel_id.c_str(), ssrc, timestamp,  
-            //     next_ps_pack[0], next_ps_pack[1], next_ps_pack[2], next_ps_pack[3]);
+            Trace("gb28181: client_id %s, unkonw ps data (%#x/%u) %02x %02x %02x %02x\n", 
+                 channel_id.c_str(), ssrc, timestamp,  
+                 next_ps_pack[0], next_ps_pack[1], next_ps_pack[2], next_ps_pack[3]);
             //break;
         }
     }
@@ -1319,13 +1339,16 @@ int SrsPsStreamClient::on_ps_stream(char* ps_data, int ps_size, uint32_t timesta
                 int count = len / 1400;
                 for (int i = 0; i < count; i++){
                     SrsRtpPacket2 rtp;
-                    rtp.rtp_header.set_ssrc(1);
+                    rtp.rtp_header.set_ssrc(ssrc);
                     rtp.rtp_header.set_payload_type(96);
                     rtp.rtp_header.set_sequence(seq++);
                     rtp.rtp_header.set_timestamp(3600*pack_index);
                     rtp.payload = new SrsRtpRawPayload();
                     rtp.payload->payload = ps_packet_stream.bytes() + i * 1400;
                     rtp.payload->nn_payload = 1400;
+
+                    if ((i+1)*1400 == len)
+                        rtp.rtp_header.set_marker(true);
 
                     // Trace("ssrc=%u, ts=%u, seq=%d, playload=%d", rtp.rtp_header.get_ssrc(), rtp.rtp_header.get_timestamp(),
                     //      rtp.rtp_header.get_sequence(), rtp.payload->nn_payload);
@@ -1355,7 +1378,7 @@ int SrsPsStreamClient::on_ps_stream(char* ps_data, int ps_size, uint32_t timesta
                     SrsRtpPacket2 rtp;
                     ps_packet_stream.bytes()+ count*1400 + unlen;
 
-                    rtp.rtp_header.set_ssrc(1);
+                    rtp.rtp_header.set_ssrc(ssrc);
                     rtp.rtp_header.set_payload_type(96);
                     rtp.rtp_header.set_sequence(seq++);
                     rtp.rtp_header.set_timestamp(3600*pack_index);
@@ -1384,7 +1407,7 @@ int SrsPsStreamClient::on_ps_stream(char* ps_data, int ps_size, uint32_t timesta
                     srs_freepa(base);
                 }
                 pack_index++;
-                st_usleep(38*1000);
+                st_usleep(30*1000);
                 ps_packet_stream.erase(ps_packet_stream.length());
             }
 

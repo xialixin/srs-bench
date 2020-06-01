@@ -191,9 +191,9 @@ int StRtmpPublishTask::ProcessTask(){
 
 StPsPublishTask::StPsPublishTask(){
     ssrc = 0;
-    psdata = new char[1024*1024*50];
+    psdata = NULL; //new char[1024*1024*50];
     size = 0;
-
+    start_pos = 0; 
     client = new SrsPsStreamClient("", false, false);
 }
 
@@ -202,7 +202,7 @@ StPsPublishTask::~StPsPublishTask(){
     srs_freep(client);
 }
 
-int StPsPublishTask::Initialize(string input, string http_url, double startup, double delay, double error, int count){
+int StPsPublishTask::Initialize(string input, string http_url, double startup, double delay, double error, int count, int start_port){
     int ret = ERROR_SUCCESS;
     
     input_flv_file = input;
@@ -212,8 +212,8 @@ int StPsPublishTask::Initialize(string input, string http_url, double startup, d
     }
 
     //SrsPsStreamClient  client("", false, false);
-    client->init_sock("127.0.0.1", 9000);
-    
+    client->init_sock("127.0.0.1", 9000, start_port);
+    start_pos = start_port;
     return ret;
 }
 
@@ -231,9 +231,14 @@ int StPsPublishTask::ProcessTask(){
     
     Trace("start to process RTMP publish task #%d, schema=%s, host=%s, port=%d, tcUrl=%s, url=%s,stream=%s, startup=%.2f, delay=%.2f, error=%.2f, count=%d", 
         GetId(), url.GetSchema(), url.GetHost(), url.GetPort(), url.GetTcUrl(), url.GetUrl(), url.GetStream(), startup_seconds, delay_seconds, error_seconds, count);
-       
+    char *psdata;
+    SrsPsStreamClient::read_ps_file("test.mpg", &psdata, &size);
+    Trace("file=%d, size=%u", psdata, size);
+    if(!psdata || !size){
+        Error("psdata is empty");
+        return ret;
+    }    
    
-
     if (!psdata || !size){
         Error("ps data is NULL!");
         return ret;
@@ -245,7 +250,7 @@ int StPsPublishTask::ProcessTask(){
     // if count is zero, infinity loop.
     for(int i = 0; count == 0 || i < count; i++){
         statistic->OnTaskStart(GetId(), url.GetUrl());
-        client->publish_ps(psdata, size, 0, GetId());
+        client->publish_ps(psdata, size, 0, start_pos+GetId());
         
         // if((ret = client.Publish(input_flv_file, &url)) != ERROR_SUCCESS){
         //     statistic->OnTaskError(GetId(), 0);

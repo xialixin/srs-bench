@@ -85,18 +85,19 @@ private:
     std::string input_flv_file;
     RtmpUrl url;
     SrsPsStreamClient *client;
+    int start_pos;
 public:
     StPsPublishTask();
     virtual ~StPsPublishTask();
 public:
     char *psdata;
-    int size;
+    long size;
     uint32_t ssrc;
 
     void copy_psdata(char *p, int size);
 
     virtual int Initialize(std::string input, 
-        std::string http_url, double startup, double delay, double error, int count);
+        std::string http_url, double startup, double delay, double error, int count, int start_port);
 protected:
     virtual Uri* GetUri();
     virtual int ProcessTask();

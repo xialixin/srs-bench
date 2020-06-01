@@ -373,7 +373,7 @@ private:
     int sendto(char *data, int size, int64_t timeout);
 public:
     int publish_ps(char* ps_data, int ps_size, uint32_t timestamp, uint32_t ssrc);
-    int init_sock(std::string host, int port);
+    int init_sock(std::string host, int port, int start_port);
 public:
     static void read_ps_file(std::string filename, char**msg, long *size);
 };
