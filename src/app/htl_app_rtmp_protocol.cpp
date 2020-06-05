@@ -16598,6 +16598,7 @@ int64_t srs_update_system_time_ms()
 
 string srs_dns_resolve(string host)
 {
+    printf("sssssss=host=%s", host.c_str());
     if (inet_addr(host.c_str()) != INADDR_NONE) {
         return host;
     }

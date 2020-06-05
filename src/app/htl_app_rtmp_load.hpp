@@ -29,6 +29,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 #include <htl_app_task_base.hpp>
 #include <htl_app_rtmp_publish.hpp>
+#include <htl_app_ps_publish.hpp>
 
 // for rtmp task.
 class StRtmpTask : public StBaseTask
@@ -82,8 +83,8 @@ protected:
 class StPsPublishTask : public StBaseTask
 {
 private:
-    std::string input_flv_file;
-    RtmpUrl url;
+    std::string input_mpg_file;
+    ProtocolUrl url;
     SrsPsStreamClient *client;
     int start_pos;
 public:

@@ -34,30 +34,33 @@ using namespace std;
 #include <htl_core_error.hpp>
 #include <htl_app_rtmp_load.hpp>
 #include <htl_app_rtmp_protocol.hpp>
+#include <htl_app_rtmp_publish.hpp>
 
 #include <htl_main_utility.hpp>
 
 #define DefaultDelaySeconds 1.0
-#define DefaultRtmpUrlSingle "rtmp://127.0.0.1:1935/live/livestream"
-#define DefaultRtmpUrl "rtmp://127.0.0.1:1935/live/livestream_{i}"
-#define DefaultInputFlv "doc/source.200kbps.768x320.flv"
+#define DefaultRtmpUrlSingle "rtp://127.0.0.1:9000"
+#define DefaultRtmpUrl "rtp://127.0.0.1:9000"
+#define DefaultInputFlv "doc/test.mpg"
 
 int discovery_options(int argc, char** argv, 
     bool& show_help, bool& show_version, string& url, int& threads, 
     double& startup, double& delay, double& error, double& report, int& count,
-    string& input
+    string& input, int &port, string &addr
 ){
     int ret = ERROR_SUCCESS;
     
     static option long_options[] = {
         SharedOptions()
         {"input", no_argument, 0, 'i'},
+        {"port", required_argument, 0, 'p'},
+        {"addr", no_argument, 0, 'a'},
         {0, 0, 0, 0}
     };
     
     int opt = 0;
     int option_index = 0;
-    while((opt = getopt_long(argc, argv, "hvc:r:t:s:d:e:m:i:", long_options, &option_index)) != -1){
+    while((opt = getopt_long(argc, argv, "hvc:r:t:s:d:e:m:i:p:a:", long_options, &option_index)) != -1){
         switch(opt){
             ProcessSharedOptions()
             case 'i':
@@ -65,6 +68,12 @@ int discovery_options(int argc, char** argv,
                 break;
             default:
                 show_help = true;
+                break;
+            case 'p': 
+                port = atof(optarg); 
+                break;
+            case 'a': 
+                addr = atof(optarg); 
                 break;
         }
     }
@@ -92,7 +101,7 @@ void help(char** argv){
         "\n"
         "Examples:\n"
         "1. start a client\n"
-        "   %s -i %s -c 1 -r %s \n"
+        "   %s -i %s -c 1 -r %s\n"
         "2. start 1000 clients\n"
         "   %s -i %s -c 1000 -r %s\n"
         "3. start 10000 clients\n"
@@ -122,9 +131,10 @@ int main(int argc, char** argv){
     string url; int threads = DefaultThread; 
     double start = DefaultStartupSeconds, delay = DefaultDelaySeconds, error = DefaultErrorSeconds;
     double report = DefaultReportSeconds; int count = DefaultCount;
-    string input;
+    string input, addr;
+    int port=0;
     
-    if((ret = discovery_options(argc, argv, show_help, show_version, url, threads, start, delay, error, report, count, input)) != ERROR_SUCCESS){
+    if((ret = discovery_options(argc, argv, show_help, show_version, url, threads, start, delay, error, report, count, input, port, addr)) != ERROR_SUCCESS){
         Error("discovery options failed. ret=%d", ret);
         return ret;
     }
@@ -138,6 +148,17 @@ int main(int argc, char** argv){
     
     Trace("params url=%s, threads=%d, start=%.2f, delay=%.2f, error=%.2f, report=%.2f, count=%d", 
         url.c_str(), threads, start, delay, error, report, count);
+
+    //SrsPsStreamClient ps("a", false, false);
+    //ps.init_sock("127.0.0.1", 9000);
+    static char *psdata=NULL;
+    // long size = 0;
+    // SrsPsStreamClient::read_ps_file("test.mpg", &psdata, &size);
+    // Trace("file=%d, size=%u", psdata, size);
+    // if(!psdata || !size){
+    //     Error("psdata is empty");
+    //     return ret;
+    // }
     
     StFarm farm;
     
@@ -151,10 +172,15 @@ int main(int argc, char** argv){
     //count = vecUrls.size() + 1
     for(vector<string>::size_type j = 0; j != vecUrls.size(); ++j){
         for(int i = 0; i < threads; i++){
-            StRtmpPublishTask* task = new StRtmpPublishTask();
+            StPsPublishTask* task = new StPsPublishTask();
+            //task->copy_psdata(psdata, size);
+            task->ssrc = i + 1;
+            // Trace("===%x, %x, %x, %x", task->psdata[0], task->psdata[1], 
+            //     task->psdata[2], task->psdata[3]);
 
             char index[16];
             snprintf(index, sizeof(index), "%d", i);
+            
             
             std::string _index = index;
             std::string rtmp_url =  vecUrls[j];
@@ -163,17 +189,21 @@ int main(int argc, char** argv){
                 rtmp_url = rtmp_url.replace(pos, 3, _index);
             }
             
-            if((ret = task->Initialize(input, rtmp_url, start, delay, error, count)) != ERROR_SUCCESS){
+            if((ret = task->Initialize(input, rtmp_url, start, delay, error, count, port)) != ERROR_SUCCESS){
                 Error("initialize task failed, input=%s, url=%s, ret=%d", input.c_str(), rtmp_url.c_str(), ret);
+                srs_freep(psdata);
                 return ret;
             }
             
             if((ret = farm.Spawn(task)) != ERROR_SUCCESS){
                 Error("st farm spwan task failed, ret=%d", ret);
+                srs_freep(psdata);
                 return ret;
             }
         }
     }
+
+    srs_freep(psdata);
     
     farm.WaitAll();
     

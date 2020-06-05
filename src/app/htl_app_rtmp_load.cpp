@@ -34,6 +34,7 @@ using namespace std;
 #include <htl_core_log.hpp>
 #include <htl_app_rtmp_play.hpp>
 #include <htl_app_rtmp_publish.hpp>
+#include <htl_app_ps_publish.hpp>
 
 #include <htl_app_rtmp_load.hpp>
 
@@ -194,6 +195,7 @@ StPsPublishTask::StPsPublishTask(){
     psdata = NULL; //new char[1024*1024*50];
     size = 0;
     start_pos = 0; 
+    input_mpg_file = "";
     client = new SrsPsStreamClient("", false, false);
 }
 
@@ -205,14 +207,16 @@ StPsPublishTask::~StPsPublishTask(){
 int StPsPublishTask::Initialize(string input, string http_url, double startup, double delay, double error, int count, int start_port){
     int ret = ERROR_SUCCESS;
     
-    input_flv_file = input;
+    input_mpg_file = input;
     
     if((ret = InitializeBase(http_url, startup, delay, error, count)) != ERROR_SUCCESS){
         return ret;
     }
 
     //SrsPsStreamClient  client("", false, false);
-    client->init_sock("127.0.0.1", 9000, start_port);
+    int port = url.GetPort();
+    string host = url.GetHost();
+    client->init_sock(host, port, start_port);
     start_pos = start_port;
     return ret;
 }
@@ -229,11 +233,14 @@ void StPsPublishTask::copy_psdata(char *p, int s){
 int StPsPublishTask::ProcessTask(){
     int ret = ERROR_SUCCESS;
     
-    Trace("start to process RTMP publish task #%d, schema=%s, host=%s, port=%d, tcUrl=%s, url=%s,stream=%s, startup=%.2f, delay=%.2f, error=%.2f, count=%d", 
-        GetId(), url.GetSchema(), url.GetHost(), url.GetPort(), url.GetTcUrl(), url.GetUrl(), url.GetStream(), startup_seconds, delay_seconds, error_seconds, count);
+    Trace("start to process PS publish task #%d, schema=%s, host=%s, port=%d, startup=%.2f, delay=%.2f, error=%.2f, count=%d", 
+        GetId(), url.GetSchema(), url.GetHost(), url.GetPort(), startup_seconds, delay_seconds, error_seconds, count);
+
     char *psdata;
-    SrsPsStreamClient::read_ps_file("test.mpg", &psdata, &size);
-    Trace("file=%d, size=%u", psdata, size);
+    SrsPsStreamClient::read_ps_file(input_mpg_file, &psdata, &size);
+
+    Trace("psfile name=%s, size=%u", input_mpg_file.c_str(), size);
+
     if(!psdata || !size){
         Error("psdata is empty");
         return ret;
@@ -244,13 +251,21 @@ int StPsPublishTask::ProcessTask(){
         return ret;
     }
 
-    Trace("2===%x, %x, %x, %x", psdata[0], psdata[1], psdata[2], psdata[3]);
-  
+    Trace("ps data %x, %x, %x, %x", psdata[0], psdata[1], psdata[2], psdata[3]);
+
+    int pid = getpid();
+    Trace("pid=%d", pid);
+
+   
     
     // if count is zero, infinity loop.
     for(int i = 0; count == 0 || i < count; i++){
         statistic->OnTaskStart(GetId(), url.GetUrl());
-        client->publish_ps(psdata, size, 0, start_pos+GetId());
+
+        uint32_t ssrc = pid << 16 | GetId();
+        Trace("pid=%d, ssrc=%u", pid, ssrc);
+        client->publish_ps(psdata, size, 0, ssrc);
+        
         
         // if((ret = client.Publish(input_flv_file, &url)) != ERROR_SUCCESS){
         //     statistic->OnTaskError(GetId(), 0);

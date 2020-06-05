@@ -88,6 +88,7 @@ rtmp: _prepare_dir
 	\$(MAKE) -f ${GLOBAL_DIR_OBJS}/${GLOBAL_FILE_MAKEFILE} sb_rtmp_load
 	\$(MAKE) -f ${GLOBAL_DIR_OBJS}/${GLOBAL_FILE_MAKEFILE} sb_rtmp_load_fast
 	\$(MAKE) -f ${GLOBAL_DIR_OBJS}/${GLOBAL_FILE_MAKEFILE} sb_rtmp_publish
+	\$(MAKE) -f ${GLOBAL_DIR_OBJS}/${GLOBAL_FILE_MAKEFILE} sb_ps_publish
 
 hls: _prepare_dir
 	@echo "build the HLS load test tool over st(state-threads)"
@@ -100,12 +101,14 @@ all: _prepare_dir
 	\$(MAKE) -f ${GLOBAL_DIR_OBJS}/${GLOBAL_FILE_MAKEFILE} sb_rtmp_load
 	\$(MAKE) -f ${GLOBAL_DIR_OBJS}/${GLOBAL_FILE_MAKEFILE} sb_rtmp_load_fast
 	\$(MAKE) -f ${GLOBAL_DIR_OBJS}/${GLOBAL_FILE_MAKEFILE} sb_rtmp_publish
+	\$(MAKE) -f ${GLOBAL_DIR_OBJS}/${GLOBAL_FILE_MAKEFILE} sb_ps_publish
 	@echo "build ok, you can:"
 	@echo "     ./objs/sb_http_load"
 	@echo "     ./objs/sb_hls_load"
 	@echo "     ./objs/sb_rtmp_load"
 	@echo "     ./objs/sb_rtmp_load_fast"
 	@echo "     ./objs/sb_rtmp_publish"
+	@echo "     ./objs/sb_ps_publish"
 
 # the ./configure will generate it.
 _prepare_dir:
@@ -132,7 +135,7 @@ GCC = g++
 LINK = \$(GCC)
 AR = ar
 
-.PHONY: default sb_http_load sb_hls_load sb_rtmp_load sb_rtmp_load_fast sb_rtmp_publish
+.PHONY: default sb_http_load sb_hls_load sb_rtmp_load sb_rtmp_load_fast sb_rtmp_publish sb_ps_publish
 
 default:
 
@@ -166,7 +169,7 @@ MODULE_DEPENDS=("CORE" "OS")
 ModuleLibIncs=(${LibSTRoot} ${LibHttpParserRoot})
 MODULE_FILES=("htl_app_hls_load" "htl_app_http_load" "htl_app_http_client" "htl_app_rtmp_play" 
     "htl_app_m3u8_parser" "htl_app_task_base" "htl_app_rtmp_load" "htl_app_rtmp_protocol"
-    "htl_app_rtmp_publish" "htl_app_srs_hijack")
+    "htl_app_rtmp_publish" "htl_app_srs_hijack" "htl_app_ps_publish")
 MODULE_DIR="src/app" . auto/modules.sh
 APP_OBJS="${MODULE_OBJS[@]}"
 
@@ -174,12 +177,12 @@ APP_OBJS="${MODULE_OBJS[@]}"
 MODULE_ID="MAIN" 
 MODULE_DEPENDS=("CORE" "OS" "APP") 
 ModuleLibIncs=(${LibSTRoot} ${LibHttpParserRoot})
-MODULE_FILES=("htl_main_hls_load" "htl_main_http_load" "htl_main_rtmp_load" "htl_main_rtmp_load_fast" "htl_main_utility" "htl_main_rtmp_publish")
+MODULE_FILES=("htl_main_hls_load" "htl_main_http_load" "htl_main_rtmp_load" "htl_main_rtmp_load_fast" "htl_main_utility" "htl_main_rtmp_publish" "htl_main_ps_publish")
 MODULE_DIR="src/main" . auto/modules.sh
 MAIN_OBJS="${MODULE_OBJS[@].o}"
 
 # all main entrances
-MAIN_ENTRANCES=("htl_main_hls_load" "htl_main_http_load" "htl_main_rtmp_load" "htl_main_rtmp_load_fast" "htl_main_rtmp_publish")
+MAIN_ENTRANCES=("htl_main_hls_load" "htl_main_http_load" "htl_main_rtmp_load" "htl_main_rtmp_load_fast" "htl_main_rtmp_publish"  "htl_main_ps_publish")
 
 # http load test tool over st(state-threads)
 ModuleLibFiles=(${LibSTfile} ${LibHttpParserfile})
@@ -201,6 +204,11 @@ BUILD_KEY="sb_rtmp_load_fast" APP_MAIN="htl_main_rtmp_load_fast" APP_NAME="sb_rt
 ModuleLibFiles=(${LibSTfile} ${LibHttpParserfile})
 MODULE_OBJS="${CORE_OBJS[@]} ${OS_OBJS[@]} ${APP_OBJS[@]} ${MAIN_OBJS[@]}"
 BUILD_KEY="sb_rtmp_publish" APP_MAIN="htl_main_rtmp_publish" APP_NAME="sb_rtmp_publish" LINK_OPTIONS="-ldl" SO_PATH="" . auto/apps.sh
+
+# ps publish test tool over st(state-threads)
+ModuleLibFiles=(${LibSTfile} ${LibHttpParserfile})
+MODULE_OBJS="${CORE_OBJS[@]} ${OS_OBJS[@]} ${APP_OBJS[@]} ${MAIN_OBJS[@]}"
+BUILD_KEY="sb_ps_publish" APP_MAIN="htl_main_ps_publish" APP_NAME="sb_ps_publish" LINK_OPTIONS="-ldl" SO_PATH="" . auto/apps.sh
 
 # hls load test tool over direct TCP.
 ModuleLibFiles=(${LibSTfile} ${LibHttpParserfile})

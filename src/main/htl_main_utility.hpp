@@ -81,7 +81,7 @@ LogContext* context = new StLogContext();
                 break; \
             case 'm': \
                 report = atof(optarg); \
-                break;\
+                break;
             
 
 #define ShowHelpPart1()\
