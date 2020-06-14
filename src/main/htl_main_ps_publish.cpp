@@ -151,7 +151,9 @@ int main(int argc, char** argv){
 
     //SrsPsStreamClient ps("a", false, false);
     //ps.init_sock("127.0.0.1", 9000);
-    static char *psdata=NULL;
+    char *psdata=NULL;
+    long size = 0;
+    SrsPsStreamClient::read_ps_file(input, &psdata, &size);
     // long size = 0;
     // SrsPsStreamClient::read_ps_file("test.mpg", &psdata, &size);
     // Trace("file=%d, size=%u", psdata, size);
@@ -173,7 +175,8 @@ int main(int argc, char** argv){
     for(vector<string>::size_type j = 0; j != vecUrls.size(); ++j){
         for(int i = 0; i < threads; i++){
             StPsPublishTask* task = new StPsPublishTask();
-            //task->copy_psdata(psdata, size);
+
+            task->copy_psdata(psdata, size);
             task->ssrc = i + 1;
             // Trace("===%x, %x, %x, %x", task->psdata[0], task->psdata[1], 
             //     task->psdata[2], task->psdata[3]);

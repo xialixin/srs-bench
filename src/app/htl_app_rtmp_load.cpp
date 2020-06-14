@@ -192,7 +192,7 @@ int StRtmpPublishTask::ProcessTask(){
 
 StPsPublishTask::StPsPublishTask(){
     ssrc = 0;
-    psdata = NULL; //new char[1024*1024*50];
+    StPsPublishTask::count++;
     size = 0;
     start_pos = 0; 
     input_mpg_file = "";
@@ -200,7 +200,14 @@ StPsPublishTask::StPsPublishTask(){
 }
 
 StPsPublishTask::~StPsPublishTask(){
-    srs_freepa(psdata);
+    
+    if (StPsPublishTask::count>0)
+        StPsPublishTask::count--;
+    
+    if (StPsPublishTask::count==0){
+       srs_freepa(StPsPublishTask::psdata);
+    }
+    
     srs_freep(client);
 }
 
@@ -226,9 +233,15 @@ Uri* StPsPublishTask::GetUri(){
 }
 
 void StPsPublishTask::copy_psdata(char *p, int s){
-    memcpy(psdata, p, s);
-    size = s;
+    if (StPsPublishTask::size != 0)
+        return;
+    StPsPublishTask::size = s;
+    memcpy(StPsPublishTask::psdata, p, s);
 }
+
+char* StPsPublishTask::psdata = new char[1024*1024*50];
+long StPsPublishTask::size  = 0;
+int StPsPublishTask::count = 0;
 
 int StPsPublishTask::ProcessTask(){
     int ret = ERROR_SUCCESS;
@@ -236,8 +249,9 @@ int StPsPublishTask::ProcessTask(){
     Trace("start to process PS publish task #%d, schema=%s, host=%s, port=%d, startup=%.2f, delay=%.2f, error=%.2f, count=%d", 
         GetId(), url.GetSchema(), url.GetHost(), url.GetPort(), startup_seconds, delay_seconds, error_seconds, count);
 
-    char *psdata;
-    SrsPsStreamClient::read_ps_file(input_mpg_file, &psdata, &size);
+    char *psdata = StPsPublishTask::psdata;
+    long size = StPsPublishTask::size;
+    //SrsPsStreamClient::read_ps_file(input_mpg_file, &psdata, &size);
 
     Trace("psfile name=%s, size=%u", input_mpg_file.c_str(), size);
 

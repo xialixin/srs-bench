@@ -783,9 +783,7 @@ int  SrsPsStreamClient::init_sock(std::string host, int port, int start_port)
         return -1;
     }
 
-    Trace("=======sock=%d port=%d, nfd=%d", sock, start_port+sock, nfd);
-
-    
+    Trace("init sock=%d port=%d, nfd=%d", sock, start_port+sock, nfd);
     return 0;
 }
 

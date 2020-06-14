@@ -91,8 +91,9 @@ public:
     StPsPublishTask();
     virtual ~StPsPublishTask();
 public:
-    char *psdata;
-    long size;
+    static char *psdata;
+    static long size;
+    static int  count;
     uint32_t ssrc;
 
     void copy_psdata(char *p, int size);
