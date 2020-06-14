@@ -92,6 +92,7 @@ private:
     std::string vhost;
     std::string app;
     std::string stream;
+    std::string url;
 public:
     RtmpUrl();
     virtual ~RtmpUrl();
@@ -103,7 +104,6 @@ public:
     virtual const char* GetApp();
     virtual const char* GetStream();
     virtual const char* GetUrl();
-    virtual string GetUrl2();
 };
 
 #endif

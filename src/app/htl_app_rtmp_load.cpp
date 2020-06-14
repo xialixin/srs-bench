@@ -148,7 +148,7 @@ int StRtmpPublishTask::Initialize(string input, string http_url, double startup,
     int ret = ERROR_SUCCESS;
     
     input_flv_file = input;
-    
+
     if((ret = InitializeBase(http_url, startup, delay, error, count)) != ERROR_SUCCESS){
         return ret;
     }

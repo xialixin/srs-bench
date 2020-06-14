@@ -46813,8 +46813,7 @@ int srs_librtmp_context_parse_uri(Context* context)
     std::string schema;
     
     srs_parse_rtmp_url(context->url, context->tcUrl, context->stream);
-
-    // when connect, we only need to parse the tcUrl
+   // when connect, we only need to parse the tcUrl
     srs_discovery_tc_url(context->tcUrl, 
         schema, context->host, context->vhost, context->app, context->port,
         context->param);

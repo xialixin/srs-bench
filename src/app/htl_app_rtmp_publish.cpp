@@ -111,7 +111,6 @@ int StRtmpPublishClient::Publish(string input, RtmpUrl* url){
 
 int StRtmpPublishClient::Connect(RtmpUrl* url){
     int ret = ERROR_SUCCESS;
-    Trace("===========%s, %s", url->GetUrl2().c_str(), url->GetUrl());
     srs_rtmp_destroy(srs);
     srs = srs_rtmp_create(url->GetUrl());
 
