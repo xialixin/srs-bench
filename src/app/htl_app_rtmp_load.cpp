@@ -268,9 +268,6 @@ int StPsPublishTask::ProcessTask(){
     Trace("ps data %x, %x, %x, %x", psdata[0], psdata[1], psdata[2], psdata[3]);
 
     int pid = getpid();
-    Trace("pid=%d", pid);
-
-   
     
     // if count is zero, infinity loop.
     for(int i = 0; count == 0 || i < count; i++){
@@ -279,7 +276,6 @@ int StPsPublishTask::ProcessTask(){
         uint32_t ssrc = pid << 16 | GetId();
         Trace("pid=%d, ssrc=%u", pid, ssrc);
         client->publish_ps(psdata, size, 0, ssrc);
-        
         
         // if((ret = client.Publish(input_flv_file, &url)) != ERROR_SUCCESS){
         //     statistic->OnTaskError(GetId(), 0);
